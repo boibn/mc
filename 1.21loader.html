@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Combine HTML parts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --mist: #eef2f7;
+    --paper: #ffffff;
+    --ink: #14213d;
+    --ink-soft: #5b6b86;
+    --line: #d9e0ec;
+    --cobalt: #2f5bff;
+    --cobalt-deep: #1f43d6;
+    --cobalt-tint: #e4eaff;
+    --green: #17855a;
+    --green-tint: #dcf3e8;
+    --rust: #b8420d;
+    --rust-tint: #fde8dc;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--mist);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 56px 20px;
+    line-height: 1.5;
+  }
+  main { width: 100%; max-width: 720px; }
+
+  h1 { font-size: 34px; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 10px; font-weight: 700; }
+  .lede { color: var(--ink-soft); margin: 0 0 32px; max-width: 56ch; font-size: 17px; }
+
+  .panel {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 28px;
+    box-shadow: 0 1px 2px rgba(20,33,61,.04), 0 12px 32px -16px rgba(20,33,61,.18);
+  }
+
+  /* Source picker */
+  .field { margin-bottom: 26px; }
+  label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+  select {
+    width: 100%;
+    appearance: none;
+    font: inherit;
+    color: var(--ink);
+    background: var(--mist) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%235b6b86' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E") no-repeat right 16px center;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 40px 12px 14px;
+    cursor: pointer;
+  }
+  select:disabled { opacity: .6; cursor: not-allowed; }
+  .hint { font-size: 13px; color: var(--ink-soft); margin: 8px 0 0; }
+
+  /* The three parts: the memorable element. They join into a single file. */
+  .strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 0;
+    transition: gap .7s cubic-bezier(.65,0,.25,1);
+  }
+  .strip.joined { gap: 0; }
+  .part {
+    position: relative;
+    overflow: hidden;
+    background: var(--mist);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 14px 16px;
+    min-height: 104px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: border-radius .7s cubic-bezier(.65,0,.25,1), border-color .3s, background .3s;
+  }
+  .strip.joined .part { border-radius: 0; border-color: var(--green); background: var(--green-tint); }
+  .strip.joined .part:first-child { border-radius: 12px 0 0 12px; }
+  .strip.joined .part:last-child { border-radius: 0 12px 12px 0; }
+  .strip.joined .part + .part { border-left-color: rgba(23,133,90,.35); }
+
+  .fill {
+    position: absolute;
+    left: 0; bottom: 0;
+    height: 5px;
+    width: 0%;
+    background: var(--cobalt);
+    transition: width .2s linear, background .3s;
+  }
+  .part.indeterminate .fill {
+    width: 40%;
+    animation: slide 1.1s ease-in-out infinite alternate;
+  }
+  .part.done .fill { width: 100%; background: var(--green); animation: none; }
+  .part.failed { border-color: var(--rust); background: var(--rust-tint); }
+  .part.failed .fill { width: 100%; background: var(--rust); animation: none; }
+  @keyframes slide { from { transform: translateX(0); } to { transform: translateX(150%); } }
+
+  .part-name { font-weight: 600; font-size: 15px; }
+  .part-status { font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
+  .part.failed .part-status { color: var(--rust); }
+  .part.done .part-status { color: var(--green); }
+
+  .result {
+    margin: 14px 0 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 14px;
+    color: var(--ink-soft);
+    flex-wrap: wrap;
+  }
+  .result strong { color: var(--ink); font-weight: 600; word-break: break-all; }
+
+  /* Actions */
+  .actions { display: flex; gap: 12px; margin-top: 26px; flex-wrap: wrap; }
+  button {
+    font: inherit;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 13px 20px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background .15s, border-color .15s, transform .1s;
+  }
+  button:active:not(:disabled) { transform: translateY(1px); }
+  button:disabled { opacity: .55; cursor: not-allowed; }
+  .primary { background: var(--cobalt); color: #fff; }
+  .primary:hover:not(:disabled) { background: var(--cobalt-deep); }
+  .secondary { background: var(--paper); color: var(--ink); border-color: var(--line); }
+  .secondary:hover:not(:disabled) { border-color: var(--ink-soft); }
+  :focus-visible { outline: 3px solid var(--cobalt); outline-offset: 2px; }
+
+  /* Messages */
+  .note {
+    margin-top: 22px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    display: none;
+  }
+  .note.show { display: block; }
+  .note.error { background: var(--rust-tint); color: #7a2b06; }
+  .note.ok { background: var(--green-tint); color: #0f5a3b; }
+
+  footer { margin-top: 22px; font-size: 13px; color: var(--ink-soft); max-width: 60ch; }
+
+  @media (max-width: 560px) {
+    body { padding: 32px 16px; }
+    h1 { font-size: 28px; }
+    .panel { padding: 20px; }
+    .strip { grid-template-columns: 1fr; }
+    .strip.joined .part:first-child { border-radius: 12px 12px 0 0; }
+    .strip.joined .part:last-child { border-radius: 0 0 12px 12px; }
+    .actions button { width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Combine HTML parts</h1>
+  <p class="lede">Download the three parts, join them in order, and get one complete HTML file.</p>
+
+  <section class="panel" aria-labelledby="src-label">
+    <div class="field">
+      <label for="source" id="src-label">Download from</label>
+      <select id="source">
+        <option value="https://cdn.jsdelivr.net/gh/boibn/mc@main/">jsDelivr (cdn.jsdelivr.net)</option>
+        <option value="https://raw.githubusercontent.com/boibn/mc/main/">GitHub raw (raw.githubusercontent.com)</option>
+      </select>
+      <p class="hint">If one source fails, switch to the other. jsDelivr refuses files over 20 MB.</p>
+    </div>
+
+    <div class="strip" id="strip" aria-live="polite">
+      <div class="part" data-n="1">
+        <div><div class="part-name">Part 1</div><div class="part-status">Waiting</div></div>
+        <div class="fill"></div>
+      </div>
+      <div class="part" data-n="2">
+        <div><div class="part-name">Part 2</div><div class="part-status">Waiting</div></div>
+        <div class="fill"></div>
+      </div>
+      <div class="part" data-n="3">
+        <div><div class="part-name">Part 3</div><div class="part-status">Waiting</div></div>
+        <div class="fill"></div>
+      </div>
+    </div>
+
+    <p class="result" id="result">
+      <span>Combined file</span>
+      <strong id="fname">1.21.html</strong>
+    </p>
+
+    <div class="actions">
+      <button class="primary" id="dl">Download combined file</button>
+      <button class="secondary" id="run">Combine and open</button>
+    </div>
+
+    <div class="note" id="note" role="status"></div>
+  </section>
+
+  <footer>The parts are joined as raw bytes in order (1, 2, 3), so large files stay intact. Everything runs in your browser.</footer>
+</main>
+
+<script>
+const FILE = "1.21.html";
+const PARTS = [1, 2, 3];
+
+const $ = (s) => document.querySelector(s);
+const strip = $("#strip");
+const note = $("#note");
+const buttons = [$("#dl"), $("#run")];
+const sourceSel = $("#source");
+const partEl = (n) => strip.querySelector('.part[data-n="' + n + '"]');
+
+const mb = (bytes) => (bytes / 1048576).toFixed(2) + " MB";
+
+function setPart(n, state, text, pct) {
+  const el = partEl(n);
+  el.classList.remove("done", "failed", "indeterminate");
+  if (state) el.classList.add(state);
+  el.querySelector(".part-status").textContent = text;
+  if (typeof pct === "number") el.querySelector(".fill").style.width = pct + "%";
+}
+
+function showNote(kind, text) {
+  note.className = "note show " + kind;
+  note.textContent = text;
+}
+
+function reset() {
+  strip.classList.remove("joined");
+  note.className = "note";
+  PARTS.forEach((n) => { setPart(n, "", "Waiting", 0); });
+}
+
+async function fetchPart(n) {
+  const url = sourceSel.value + FILE + ".part" + n;
+  setPart(n, "indeterminate", "Connecting…");
+  const res = await fetch(url);
+  if (!res.ok) throw Object.assign(new Error("HTTP " + res.status), { part: n });
+
+  const total = Number(res.headers.get("content-length")) || 0;
+  const reader = res.body.getReader();
+  const chunks = [];
+  let got = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    got += value.length;
+    if (total) {
+      setPart(n, "", mb(got) + " of " + mb(total), (got / total) * 100);
+    } else {
+      setPart(n, "indeterminate", mb(got) + " downloaded");
+    }
+  }
+  setPart(n, "done", "Done, " + mb(got), 100);
+  return new Blob(chunks);
+}
+
+async function combine() {
+  reset();
+  const blobs = [];
+  for (const n of PARTS) {
+    try {
+      blobs.push(await fetchPart(n));
+    } catch (err) {
+      const failedPart = err.part || n;
+      setPart(failedPart, "failed", "Failed to download");
+      throw new Error("Part " + failedPart + " could not be downloaded (" + err.message + "). Try the other source, or check your connection.");
+    }
+  }
+  const out = new Blob(blobs, { type: "text/html" });
+  strip.classList.add("joined");
+  return out;
+}
+
+async function handle(mode) {
+  buttons.forEach((b) => (b.disabled = true));
+  sourceSel.disabled = true;
+  try {
+    const blob = await combine();
+    const url = URL.createObjectURL(blob);
+    if (mode === "download") {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = FILE;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      showNote("ok", "Combined " + mb(blob.size) + " and saved as " + FILE + ".");
+    } else {
+      showNote("ok", "Combined " + mb(blob.size) + ". Opening now…");
+      setTimeout(() => { location.href = url; }, 900);
+    }
+  } catch (e) {
+    showNote("error", e.message);
+  } finally {
+    buttons.forEach((b) => (b.disabled = false));
+    sourceSel.disabled = false;
+  }
+}
+
+$("#dl").addEventListener("click", () => handle("download"));
+$("#run").addEventListener("click", () => handle("open"));
+sourceSel.addEventListener("change", reset);
+</script>
+</body>
+</html>
